@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Code Connect</title>
+
+<style>
+body {
+  background:#111;
+  color:#fff;
+  font-family:Arial;
+  margin:0;
+  padding:20px;
+}
+
+button,input {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+}
+
+button {
+  background:#00ff99;
+  cursor:pointer;
+}
+
+#chat {
+  display:none;
+}
+
+#messages {
+  height:60vh;
+  overflow-y:auto;
+  margin-bottom:10px;
+}
+
+.msg {
+  margin:6px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div id="codePage">
+  <h2>Your Unique Code</h2>
+  <h1 id="myCode"></h1>
+
+  <input id="otherCode" placeholder="Enter other person's code">
+  <button onclick="connect()">Connect</button>
+</div>
+
+<div id="chat">
+  <h3>Connected</h3>
+  <div id="messages"></div>
+  <input id="msg" placeholder="Type message">
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+let myCode = localStorage.getItem("myCode");
+if(!myCode){
+  myCode = Math.random().toString(36).substring(2,8).toUpperCase();
+  localStorage.setItem("myCode", myCode);
+}
+document.getElementById("myCode").innerText = myCode;
+
+let channel = null;
+
+// BroadcastChannel = browser-only private bridge
+function connect(){
+  const other = document.getElementById("otherCode").value.trim();
+  if(!other) return alert("Enter code");
+
+  const channelName = [myCode, other].sort().join("_");
+  channel = new BroadcastChannel(channelName);
+
+  channel.onmessage = e => {
+    addMsg(e.data.sender + ": " + e.data.text);
+  };
+
+  document.getElementById("codePage").style.display="none";
+  document.getElementById("chat").style.display="block";
+}
+
+function send(){
+  const text = document.getElementById("msg").value;
+  if(!text) return;
+
+  channel.postMessage({ sender: myCode, text });
+  addMsg("Me: " + text);
+  document.getElementById("msg").value="";
+}
+
+function addMsg(t){
+  const div = document.createElement("div");
+  div.className="msg";
+  div.innerText=t;
+  document.getElementById("messages").appendChild(div);
+}
+</script>
+
+</body>
+</html>
